@@ -10,6 +10,6 @@ public class Library {
     }
 
     String myNameIs() {
-        return null;
+        return "Kecske";
     }
 }
