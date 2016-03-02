@@ -32,7 +32,7 @@ public class LibraryTest {
    }
 
 
-    @Ignore
+
     @Test
     public void stringPoolSzorgalmi() {
         assertTrue("Nem volt sikeres a szorgalmi megoldasa", elsoSzorgalmi.feladatSikeres());
