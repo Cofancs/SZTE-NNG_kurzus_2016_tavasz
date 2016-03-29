@@ -7,6 +7,7 @@ public class ElsoSzorgalmi {
             final String elsoSzoveg="ELSO szoveg";
             final String elsovelAzonosTartalmuSzoveg=new String("ELSO szoveg");
             // ide irj
-            return elsoSzoveg == elsovelAzonosTartalmuSzoveg;
+            boolean isEqual= elsoSzoveg.equals(elsovelAzonosTartalmuSzoveg);
+            return isEqual;
     }
 }
