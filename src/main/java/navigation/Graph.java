@@ -13,4 +13,6 @@ public interface Graph {
 	 */
 	void initializeFromFile(File inputXmlFile);
 
+
+
 }
