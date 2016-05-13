@@ -1,0 +1,10 @@
+The input graph of any path searching is stored in the graph.xml file 
+in the project's root directory.
+
+The graph is planar, directed, and weighted. Nodes have X and Y 
+coordinates. You can calculate the length of edges using the 
+coordinates of their start and end nodes.
+
+Edges have an average speed property. You can travel along any edge
+by at most this speed. To calculate the minimal travel time along 
+an edge, you simply divide the edge's length by its averageSpeed.
