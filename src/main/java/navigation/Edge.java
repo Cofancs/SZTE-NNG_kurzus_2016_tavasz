@@ -18,7 +18,7 @@ public class Edge {
     }
 
     public void calculateTime(){
-        getTime( getDistance()/getAverageSpeed());
+        setTime( getDistance()/getAverageSpeed());
     }
 
     public int getId() {

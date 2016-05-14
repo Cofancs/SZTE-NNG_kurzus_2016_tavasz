@@ -16,16 +16,33 @@ public class GraphImpl implements Graph {
 	private  Map<Integer,List<Double>> nodeListFromXML; //Map<NodeID,List<coordinates>>
 	private  Map<Integer,Map<Integer,Map<Integer,Integer>>> edgeListFromXML; //Map<EdgeID,Map<startNodeValue,Map<endNodeValue,averageSpeedValue>>>
     private  int nodeId=0;
-    private   List<Vertex> vertexList;
-    private   List<Edge> edgeList;
-
+    private List<Vertex> vertexList;
+    private List<Edge> edgesList;
 
 
     public GraphImpl(){
 					nodeListFromXML = new HashMap<Integer,List<Double>>();
 					edgeListFromXML = new HashMap<Integer,Map<Integer, Map<Integer,Integer>>>();
+                    vertexList= new ArrayList<Vertex>();
+                    edgesList=new ArrayList<Edge>();
 	}
     /*Getter And Setters*/
+
+    public List<Edge> getEdgesList() {
+        return edgesList;
+    }
+
+    public void setEdgesList(List<Edge> edgesList) {
+        this.edgesList = edgesList;
+    }
+
+    public List<Vertex> getVertexList() {
+        return vertexList;
+    }
+
+    public void setVertexList(List<Vertex> vertexList) {
+        this.vertexList = vertexList;
+    }
     public  Map<Integer, List<Double>> getNodeListFromXML() {
         return this.nodeListFromXML;
     }
@@ -42,21 +59,6 @@ public class GraphImpl implements Graph {
         this.edgeListFromXML = edgeListFromXML;
     }
 
-    public List<Vertex> getVertexList() {
-        return vertexList;
-    }
-
-    public void setVertexList(List<Vertex> vertexList) {
-        this.vertexList = vertexList;
-    }
-
-    public List<Edge> getEdgeList() {
-        return edgeList;
-    }
-
-    public void setEdgeList(List<Edge> edgeList) {
-        this.edgeList = edgeList;
-    }
 
     @Override
 	public void initializeFromFile(File inputXmlFile) {
@@ -81,12 +83,13 @@ public class GraphImpl implements Graph {
 	private  void makeGraph(NodeList xmlNodeList){
 
 
+
 		for(int i=0;i<xmlNodeList.getLength();i++) {
 			Node tempNode = xmlNodeList.item(i); //1. tempNode.getNodeName()=graph
 
 
 			if (tempNode.getNodeType() == Node.ELEMENT_NODE) {
-				System.out.println("\nNode Name =" + tempNode.getNodeName() + " [OPEN]");
+				//System.out.println("\nNode Name =" + tempNode.getNodeName() + " [OPEN]");
 				/*if(tempNode.getNodeName()!="graph") {
 					//System.out.println("Node Value =" + tempNode.getTextContent());
 				}*/
@@ -101,18 +104,10 @@ public class GraphImpl implements Graph {
 						String attrName = node.getNodeName();
 						//System.out.println("attr name : " +attrName);
 						//System.out.println("attr value : " + attrValue);
-                        Vertex vertex=new Vertex();
-                        Edge edge=new Edge();
 
 						if(attrName.equals("id")){
 							 this.nodeId=Integer.valueOf(attrValue);
-                            if(tempNode.getNodeName().equals("node")) {
 
-                                vertex.setNodeId(nodeId);
-                            }else if(tempNode.getNodeName().equals("edge")){
-
-                                edge.setId(nodeId);
-                            }
 						}
                         Map<Integer, Map<Integer, Integer>> startNodeList = new HashMap<Integer, Map<Integer, Integer>>();
 						if(Objects.equals(tempNode.getParentNode().getNodeName(), "node")){
@@ -124,14 +119,13 @@ public class GraphImpl implements Graph {
 									//y-coordinate
 									coordinateList.add(Double.valueOf(tempNode.getTextContent()));
 									NodeList tempNodeList=tempNode.getParentNode().getChildNodes();
-                                    vertex.setyCoord(Double.valueOf(tempNodeList.item(1).getTextContent()));
-                                    vertex.setxCoord(Double.valueOf(tempNodeList.item(5).getTextContent()));
+
 
 									//x-coordinate
 									//System.out.println("PArents lastChild Value =" + tempNodeList.item(3).getTextContent());
 									coordinateList.add(Double.valueOf(tempNodeList.item(3).getTextContent()));
 									//System.out.println("Node id:"+nodeId);
-                                    vertexList.add(nodeId,vertex);
+
 									this.nodeListFromXML.put(this.nodeId, coordinateList);
 								}
 
@@ -144,7 +138,7 @@ public class GraphImpl implements Graph {
 								//System.out.println("startNode Value =" +tempNode.getTextContent());
 								startNodeValue=Integer.valueOf(tempNode.getTextContent());
 
-                                edge.setStartVertex(vertexList.get(startNodeValue));
+
 
 								NodeList tempNodeList=tempNode.getParentNode().getChildNodes();
 								//System.out.println(" endNode Value =" + tempNodeList.item(3).getTextContent());
@@ -152,10 +146,7 @@ public class GraphImpl implements Graph {
                                 int endNodeValue=Integer.valueOf(tempNodeList.item(3).getTextContent());
                                 int avarageSpeed=Integer.valueOf(tempNodeList.item(5).getTextContent());
 								endNodeList.put(endNodeValue,avarageSpeed);
-                                edge.setEndVertex(vertexList.get(endNodeValue));
-                                edge.setAverageSpeed(avarageSpeed);
 
-                                edgeList.add(edge);
 								startNodeList.put(startNodeValue, endNodeList);
 								edgeListFromXML.put(nodeId, startNodeList);
 							}
@@ -175,10 +166,43 @@ public class GraphImpl implements Graph {
 
 
 
-				System.out.println("Node Name =" + tempNode.getNodeName() + " [CLOSE]");
+				//System.out.println("Node Name =" + tempNode.getNodeName() + " [CLOSE]");
 			}
 		}
 	}
+
+    public void collectVertexes(){
+
+        for (int key:getNodeListFromXML().keySet()){
+            Vertex vertex=new Vertex();
+            vertex.setNodeId(key);
+            double yCoord=getNodeListFromXML().get(key).get(0);
+            double xCoord=getNodeListFromXML().get(key).get(1);
+            vertex.setyCoord(yCoord);
+            vertex.setxCoord(xCoord);
+            vertexList.add(vertex);
+        }
+
+    }
+
+    public void collectEdges(){
+        for (int key:getEdgeListFromXML().keySet()){
+            Edge edge=new Edge();
+            edge.setId(key);
+            for(int key2:getEdgeListFromXML().get(key).keySet()) {
+                Vertex startVertex = vertexList.get(key2-1);
+                edge.setStartVertex(startVertex);
+                for (int key3:getEdgeListFromXML().get(key).get(key2).keySet()){
+                    Vertex endVertex=vertexList.get(key3-1);
+                    edge.setEndVertex(endVertex);
+                    edge.setAverageSpeed(getEdgeListFromXML().get(key).get(key2).get(key3));
+                    edge.calculateDistance();
+                    edge.calculateTime();
+                    edgesList.add(edge);
+                }
+            }
+        }
+    }
 
 
 

@@ -8,12 +8,38 @@ import java.util.List;
  */
 public class Vertex {
     private int nodeId;
+    private  Vertex parentVertex;
     private double yCoord;
     private double xCoord;
+    private double f,g,h;
     private List<Edge> edges;
 
     public Vertex() {
         this.edges=new LinkedList<Edge>();
+    }
+
+    public double getF() {
+        return f;
+    }
+
+    public void setF(double f) {
+        this.f = f;
+    }
+
+    public double getG() {
+        return g;
+    }
+
+    public void setG(double g) {
+        this.g = g;
+    }
+
+    public double getH() {
+        return h;
+    }
+
+    public void setH(double h) {
+        this.h = this.h;
     }
 
     public void addEdge(Edge edge){
@@ -50,5 +76,13 @@ public class Vertex {
 
     public void setEdges(List<Edge> edges) {
         this.edges = edges;
+    }
+
+    public Vertex getParentVertex() {
+        return parentVertex;
+    }
+
+    public void setParentVertex(Vertex parentVertex) {
+        this.parentVertex = parentVertex;
     }
 }
