@@ -38,9 +38,14 @@ public class AlgorithmImpl implements Algorithm {
 	@Override
 	public DistanceResult findShortestPath(int startNodeId,
 			int destinationNodeId) {
-		Vertex startVertex = graph.getVertexList().get(startNodeId-1);
-		Vertex endVertex = graph.getVertexList().get(destinationNodeId-1);
-		return null;
+			DistanceResultImpl distanceResult=new DistanceResultImpl();
+
+		List<Vertex> aStarList=aStar(startNodeId,destinationNodeId);
+		if(!aStarList.isEmpty()){
+			distanceResult.getClosedListFromAlgorithm(aStarList);
+
+		}
+		return distanceResult;
 	}
 
 	@Override
@@ -74,7 +79,7 @@ public class AlgorithmImpl implements Algorithm {
 
 		vertexLowest=vertexList.get(0);
 		Vertex tempVertex=vertexLowest;
-		double min=vertexList.get(0).getF();
+		double min=10000000;
 		for (Vertex vertex:vertexList){
 			double f=vertex.getF();
 			if(f<min){
@@ -95,26 +100,37 @@ public class AlgorithmImpl implements Algorithm {
 		openList.add(startingVertex);
 
 		while(!openList.isEmpty()){
-			Vertex cheapestVertex=findVertexWithLowestHeuristicValue(openList);
-			openList.remove(cheapestVertex);
-			List<Vertex> neighbourList=findNeighborVertexes(cheapestVertex);
+			Vertex lowestVertex=openList.remove(0);
+			List<Vertex> neighbourList=findNeighborVertexes(lowestVertex);
 			for (Vertex neighbour:neighbourList){
-				neighbour.setParentVertex(cheapestVertex);
+
+				neighbour.setParentVertex(lowestVertex);
 				if(neighbour.getNodeId()==destinationVertexId){
+					closedList.add(neighbour);
 					break;
 				}
-				double g=0,h=0,f=0;
-				for (Edge edge:cheapestVertex.getEdges()){
-					if(edge.getEndVertex()==neighbour){
-						g=edge.getDistance();
+				/*double g=0,h=0,f=0;
+				for (Edge edge:lowestVertex.getEdges()){
+					if(!closedList.isEmpty()) {
+						for (Vertex vertex : closedList) {
+							if (!edge.getEndVertex().equals(vertex) && edge.getEndVertex().equals(neighbour)) {
+								g = edge.getDistance();
+							}
+						}
+					}else{
+						if (edge.getEndVertex().equals(neighbour)) {
+							g = edge.getDistance();
+						}
 					}
 				}
 				for(Edge edge:neighbour.getEdges()){
-					if(edge.getEndVertex()==destinationVertex){
-						h=edge.getDistance();
+					if(!edge.getEndVertex().equals(lowestVertex)){
+						h=airDistance(neighbour,destinationVertex);
 					}
+
 				}
-				neighbour.setG(cheapestVertex.getG()+g);
+
+				neighbour.setG(lowestVertex.getG()+g);
 				neighbour.setH(h);
 				neighbour.setF(neighbour.getG()+neighbour.getH());
 
@@ -125,14 +141,25 @@ public class AlgorithmImpl implements Algorithm {
 					if(closedList.contains(neighbour)){
 						closedList.remove(neighbour);
 					}
+					if(openList.contains(neighbour)&&cheapestVertex){
+
 				}
+				}
+
+				if(openList.contains(neighbour)&& lowestVertex.getG()<neighbour.getF()){
+					openList.remove(neighbour);
+				}
+				if(closedList.contains(neighbour) && lowestVertex.getG()<neighbour.getF()){
+					closedList.remove(neighbour);
+				}*/
 				if(!openList.contains(neighbour) && !closedList.contains(neighbour)){
 					openList.add(neighbour);
 				}
 
 			}
-			closedList.add(cheapestVertex);
+			closedList.add(lowestVertex);
 		}
+		System.out.println(closedList.get(closedList.size()-1).getNodeId());
 		return closedList;
 	}
 
@@ -145,11 +172,25 @@ public class AlgorithmImpl implements Algorithm {
 	public List<Vertex> findNeighborVertexes(Vertex vertex){
 		List<Vertex> neighborVertexes = new ArrayList<Vertex> ();
 
-		for (int key: graph.getEdgeListFromXML().get(vertex.getNodeId()).keySet() ) {
-			neighborVertexes.add(graph.getVertexList().get(key-1));
+		for (Edge edge: vertex.getEdges() ) {
+			neighborVertexes.add(edge.getEndVertex());
 		}
 
 		return neighborVertexes;
 	}
 
+	public double airDistance(Vertex startVertex,Vertex destinationVertex){
+		double airDistance=0;
+		double x1,x2,y1,y2,x,y;
+		x1=startVertex.getxCoord();
+		y1=startVertex.getyCoord();
+		x2=destinationVertex.getxCoord();
+		y2=destinationVertex.getyCoord();
+		x=x1-x2;
+		y=y1-y2;
+		airDistance=Math.sqrt((x*x)+(y*y));
+
+		return airDistance;
+	}
 }
+
