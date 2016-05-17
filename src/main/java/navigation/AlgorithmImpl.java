@@ -42,7 +42,7 @@ public class AlgorithmImpl implements Algorithm {
 
 		List<Vertex> aStarList=aStar(startNodeId,destinationNodeId);
 		if(!aStarList.isEmpty()){
-			distanceResult.getClosedListFromAlgorithm(aStarList);
+			distanceResult.getParentListFromAlgorithm(aStarList);
 
 		}
 		return distanceResult;
@@ -50,8 +50,14 @@ public class AlgorithmImpl implements Algorithm {
 
 	@Override
 	public TimeResult findFastestPath(int startNodeId, int destinationNodeId) {
-		// TODO Auto-generated method stub
-		return null;
+        TimeResultImpl timeResult=new TimeResultImpl();
+
+        List<Vertex> aStarList=aStarWithTime(startNodeId,destinationNodeId);
+        if(!aStarList.isEmpty()){
+            timeResult.getParentListFromAlgorithm(aStarList);
+
+        }
+        return timeResult;
 	}
 
 	@Override
@@ -59,16 +65,28 @@ public class AlgorithmImpl implements Algorithm {
 
 		boolean isPath=false;
 
+            if(startNodeId==destinationNodeId){
+                return true;
+            }
+        List<Vertex> openList=new LinkedList<Vertex>();
+        List<Vertex> closedList=new LinkedList<Vertex>();
 
-			List<Vertex> aStarList=aStar(startNodeId,destinationNodeId);
-			if(!aStarList.isEmpty()){
-				for (Vertex vertex:aStarList) {
-					if(vertex.getNodeId()==destinationNodeId){
-						isPath=true;
-					}
-				}
-
-			}
+        Vertex startingVertex=vertexList.get(startNodeId-1);
+        Vertex destinationVertex=vertexList.get(destinationNodeId-1);
+        openList.add(startingVertex);
+        while (!openList.isEmpty()){
+            Vertex currentVertex=openList.remove(0);
+            List<Vertex> neighbourList=findNeighborVertexes(currentVertex,closedList);
+            for (Vertex neighbour:neighbourList){
+                if(neighbour.equals(destinationVertex)){
+                    return true;
+                }
+                if(!openList.contains(neighbour)&&!closedList.contains(neighbour)){
+                    openList.add(neighbour);
+                }
+            }
+            closedList.add(currentVertex);
+        }
 
 
 		return isPath;
@@ -94,74 +112,185 @@ public class AlgorithmImpl implements Algorithm {
 	public List<Vertex> aStar(int startVertexId,int destinationVertexId){
 		List<Vertex> openList=new LinkedList<Vertex>();
 		List<Vertex> closedList=new LinkedList<Vertex>();
+		List<Vertex> parentList=new LinkedList<Vertex>();
+        List<Integer> parentListById=new LinkedList<Integer>();
 
 		Vertex startingVertex=vertexList.get(startVertexId-1);
 		Vertex destinationVertex=vertexList.get(destinationVertexId-1);
+		startingVertex.setParentVertex(startingVertex);
+        startingVertex.setF(airDistance(startingVertex,destinationVertex));
 		openList.add(startingVertex);
 
-		while(!openList.isEmpty()){
-			Vertex lowestVertex=openList.remove(0);
-			List<Vertex> neighbourList=findNeighborVertexes(lowestVertex);
-			for (Vertex neighbour:neighbourList){
 
-				neighbour.setParentVertex(lowestVertex);
-				if(neighbour.getNodeId()==destinationVertexId){
+		while(!openList.isEmpty()){
+			Vertex currentVertex=findVertexWithLowestHeuristicValue(openList);
+            openList.remove(currentVertex);
+			if(currentVertex.equals(destinationVertex)){
+
+				closedList.add(currentVertex);
+				break;
+			}
+            closedList.add(currentVertex);
+            //azokat a szomszédokat adja vissza amelyek nincsenek benne a closedListben
+			List<Vertex> neighbourList=findNeighborVertexes(currentVertex,closedList);
+
+			for (Vertex neighbour:neighbourList){
+				neighbour.setParentVertex(currentVertex);
+
+				if(neighbour.equals(destinationVertex)){
+					Edge currentEdge=null;
+					for (Edge edge:destinationVertex.getEdges()){
+						if(edge.getEndVertex().equals(currentVertex)){
+							currentEdge=edge;
+							break;
+						}
+					}
+					neighbour.setG(currentVertex.getG()+currentEdge.getDistance());
+                    neighbour.setT(currentVertex.getT()+currentEdge.getTime());
 					closedList.add(neighbour);
+					openList.removeAll(openList);
 					break;
 				}
-				/*double g=0,h=0,f=0;
-				for (Edge edge:lowestVertex.getEdges()){
-					if(!closedList.isEmpty()) {
-						for (Vertex vertex : closedList) {
-							if (!edge.getEndVertex().equals(vertex) && edge.getEndVertex().equals(neighbour)) {
-								g = edge.getDistance();
-							}
-						}
-					}else{
-						if (edge.getEndVertex().equals(neighbour)) {
-							g = edge.getDistance();
-						}
+
+				double g=1000000,t=0;
+				Edge currentAndNeighboursEdge=null;
+				for (Edge edge:currentVertex.getEdges()){
+					if(edge.getEndVertex().equals(neighbour)){
+						currentAndNeighboursEdge=edge;
+						break;
 					}
 				}
-				for(Edge edge:neighbour.getEdges()){
-					if(!edge.getEndVertex().equals(lowestVertex)){
-						h=airDistance(neighbour,destinationVertex);
-					}
+                if(!closedList.isEmpty()) {
+                    for (Vertex vertex : closedList) {
+                        if (!currentAndNeighboursEdge.getEndVertex().equals(currentVertex.getParentVertex())&&!currentAndNeighboursEdge.getEndVertex().equals(vertex) ) {
+                            g=currentAndNeighboursEdge.getDistance();
+                            t=currentAndNeighboursEdge.getTime();
+                        }
+                    }
+                }else{
+                    if (!currentAndNeighboursEdge.getEndVertex().equals(currentVertex.getParentVertex())) {
+                        g=currentAndNeighboursEdge.getDistance();
+                        t=currentAndNeighboursEdge.getTime();
+                    }
+                }
+                double hValue=airDistance(neighbour,destinationVertex);
+                neighbour.setG(currentVertex.getG()+g);
+                neighbour.setT(currentVertex.getT()+t);
+				neighbour.setHV(hValue);
+				neighbour.setF(neighbour.getG()+neighbour.getHV());
 
-				}
+                if(!openList.contains(neighbour)&& !closedList.contains(neighbour)){
+                    openList.add(neighbour);
+                }
 
-				neighbour.setG(lowestVertex.getG()+g);
-				neighbour.setH(h);
-				neighbour.setF(neighbour.getG()+neighbour.getH());
-
-				if(cheapestVertex.getF()<neighbour.getF()){
-					if(openList.contains(neighbour)){
-						openList.remove(neighbour);
-					}
-					if(closedList.contains(neighbour)){
-						closedList.remove(neighbour);
-					}
-					if(openList.contains(neighbour)&&cheapestVertex){
-
-				}
-				}
-
-				if(openList.contains(neighbour)&& lowestVertex.getG()<neighbour.getF()){
-					openList.remove(neighbour);
-				}
-				if(closedList.contains(neighbour) && lowestVertex.getG()<neighbour.getF()){
-					closedList.remove(neighbour);
-				}*/
-				if(!openList.contains(neighbour) && !closedList.contains(neighbour)){
-					openList.add(neighbour);
-				}
 
 			}
-			closedList.add(lowestVertex);
 		}
-		System.out.println(closedList.get(closedList.size()-1).getNodeId());
-		return closedList;
+        Vertex lastVertex=closedList.get(closedList.size()-1);
+        parentList.add(lastVertex);
+        parentListById.add(lastVertex.getNodeId());
+        while (!lastVertex.getParentVertex().equals(startingVertex)){
+            parentList.add(lastVertex.getParentVertex());
+            parentListById.add(lastVertex.getParentVertex().getNodeId());
+            lastVertex=lastVertex.getParentVertex();
+        }
+        parentList.add(lastVertex.getParentVertex());
+        parentListById.add(lastVertex.getParentVertex().getNodeId());
+        Collections.reverse(parentList);
+        //Collections.reverse(parentListById);
+        System.out.println(parentListById);
+		return parentList;
 	}
+
+    public List<Vertex> aStarWithTime(int startVertexId,int destinationVertexId){
+        List<Vertex> openList=new LinkedList<Vertex>();
+        List<Vertex> closedList=new LinkedList<Vertex>();
+        List<Vertex> parentList=new LinkedList<Vertex>();
+        List<Integer> parentListById=new LinkedList<Integer>();
+
+        Vertex startingVertex=vertexList.get(startVertexId-1);
+        Vertex destinationVertex=vertexList.get(destinationVertexId-1);
+        startingVertex.setParentVertex(startingVertex);
+        startingVertex.setF(airDistance(startingVertex,destinationVertex));
+        openList.add(startingVertex);
+
+
+        while(!openList.isEmpty()){
+            Vertex currentVertex=findVertexWithLowestHeuristicValue(openList);
+            openList.remove(currentVertex);
+            if(currentVertex.equals(destinationVertex)){
+
+                closedList.add(currentVertex);
+                break;
+            }
+            closedList.add(currentVertex);
+            //azokat a szomszédokat adja vissza amelyek nincsenek benne a closedListben
+            List<Vertex> neighbourList=findNeighborVertexes(currentVertex,closedList);
+
+            for (Vertex neighbour:neighbourList){
+                neighbour.setParentVertex(currentVertex);
+
+                if(neighbour.equals(destinationVertex)){
+                    Edge currentEdge=null;
+                    for (Edge edge:destinationVertex.getEdges()){
+                        if(edge.getEndVertex().equals(currentVertex)){
+                            currentEdge=edge;
+                            break;
+                        }
+                    }
+                    neighbour.setT(currentVertex.getT()+currentEdge.getTime());
+                    closedList.add(neighbour);
+                    openList.removeAll(openList);
+                    break;
+                }
+
+                double g=1000000,t=0;
+                Edge currentAndNeighboursEdge=null;
+                for (Edge edge:currentVertex.getEdges()){
+                    if(edge.getEndVertex().equals(neighbour)){
+                        currentAndNeighboursEdge=edge;
+                        break;
+                    }
+                }
+                if(!closedList.isEmpty()) {
+                    for (Vertex vertex : closedList) {
+                        if (!currentAndNeighboursEdge.getEndVertex().equals(currentVertex.getParentVertex())&&!currentAndNeighboursEdge.getEndVertex().equals(vertex) ) {
+                            t=currentAndNeighboursEdge.getTime();
+                        }
+                    }
+                }else{
+                    if (!currentAndNeighboursEdge.getEndVertex().equals(currentVertex.getParentVertex())) {
+                        t=currentAndNeighboursEdge.getTime();
+                    }
+                }
+                double hValue=airDistance(neighbour,destinationVertex);
+
+                neighbour.setT(currentVertex.getT()+t);
+                neighbour.setHV(hValue);
+                neighbour.setF(neighbour.getT()+neighbour.getHV());
+
+                if(!openList.contains(neighbour)&& !closedList.contains(neighbour)){
+                    openList.add(neighbour);
+                }
+
+
+            }
+        }
+        Vertex lastVertex=closedList.get(closedList.size()-1);
+        parentList.add(lastVertex);
+        parentListById.add(lastVertex.getNodeId());
+        while (!lastVertex.getParentVertex().equals(startingVertex)){
+            parentList.add(lastVertex.getParentVertex());
+            parentListById.add(lastVertex.getParentVertex().getNodeId());
+            lastVertex=lastVertex.getParentVertex();
+        }
+        parentList.add(lastVertex.getParentVertex());
+        parentListById.add(lastVertex.getParentVertex().getNodeId());
+        Collections.reverse(parentList);
+        //Collections.reverse(parentListById);
+        System.out.println(parentListById);
+        return parentList;
+    }
 
 
 	/**
@@ -169,18 +298,20 @@ public class AlgorithmImpl implements Algorithm {
 	 *
 	 */
 
-	public List<Vertex> findNeighborVertexes(Vertex vertex){
+	public List<Vertex> findNeighborVertexes(Vertex vertex,List<Vertex> closedList){
 		List<Vertex> neighborVertexes = new ArrayList<Vertex> ();
 
 		for (Edge edge: vertex.getEdges() ) {
-			neighborVertexes.add(edge.getEndVertex());
+            if(!closedList.contains(edge.getEndVertex())){
+			    neighborVertexes.add(edge.getEndVertex());
+            }
 		}
 
 		return neighborVertexes;
 	}
 
 	public double airDistance(Vertex startVertex,Vertex destinationVertex){
-		double airDistance=0;
+
 		double x1,x2,y1,y2,x,y;
 		x1=startVertex.getxCoord();
 		y1=startVertex.getyCoord();
@@ -188,9 +319,8 @@ public class AlgorithmImpl implements Algorithm {
 		y2=destinationVertex.getyCoord();
 		x=x1-x2;
 		y=y1-y2;
-		airDistance=Math.sqrt((x*x)+(y*y));
 
-		return airDistance;
+		return Math.sqrt((x*x)+(y*y));
 	}
 }
 

@@ -11,11 +11,19 @@ public class Vertex {
     private  Vertex parentVertex;
     private double yCoord;
     private double xCoord;
-    private double f,g,h;
+    private double f,g,hV,t;
     private List<Edge> edges;
 
     public Vertex() {
         this.edges=new LinkedList<Edge>();
+    }
+
+    public double getT() {
+        return t;
+    }
+
+    public void setT(double t) {
+        this.t = t;
     }
 
     public double getF() {
@@ -34,12 +42,12 @@ public class Vertex {
         this.g = g;
     }
 
-    public double getH() {
-        return h;
+    public double getHV() {
+        return hV;
     }
 
-    public void setH(double h) {
-        this.h = this.h;
+    public void setHV(double hValue) {
+        this.hV = hValue;
     }
 
     public void addEdge(Edge edge){

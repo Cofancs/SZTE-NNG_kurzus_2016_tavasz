@@ -61,7 +61,7 @@ public class Edge {
         this.distance = distance;
     }
 
-    public double getTime(double v) {
+    public double getTime() {
         return time;
     }
 
